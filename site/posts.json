@@ -1,0 +1,158 @@
+{
+  "posts": [
+    {
+      "slug": "building-in-public-without-the-noise",
+      "title": "Building in public without the noise",
+      "excerpt": "A practical way to share what you learn, protect your focus, and turn small experiments into useful writing.",
+      "category": "Engineering",
+      "date": "2026-10-10",
+      "readingTime": "3 min read",
+      "featured": true,
+      "research": false,
+      "artLabel": "BUILD / LEARN",
+      "artBackground": "#e8e2ff",
+      "artInk": "#43318f",
+      "tags": [
+        "writing",
+        "productivity",
+        "building"
+      ],
+      "body": [
+        {
+          "heading": "Start with something specific"
+        },
+        "Writing online does not require a grand announcement or a perfect personal brand. Start with a small, specific lesson that could help someone solve a real problem.",
+        "Keep a note on your phone. When you fix a bug, make a decision, test an idea, or learn something surprising, capture the context and the lesson in a few sentences.",
+        {
+          "heading": "Share responsibly"
+        },
+        "Before publishing, remove private information, customer details, access tokens, internal screenshots, and anything you do not have permission to share.",
+        "Consistency is more useful than urgency. A clear article published regularly is better than a rushed post written only to keep up with a trend."
+      ]
+    },
+    {
+      "slug": "small-notes-better-decisions",
+      "title": "Small notes lead to better decisions",
+      "excerpt": "A simple note-taking habit can help you spot patterns and explain why you made a choice.",
+      "category": "Productivity",
+      "date": "2026-10-06",
+      "readingTime": "2 min read",
+      "featured": true,
+      "research": false,
+      "artLabel": "THINK CLEAR",
+      "artBackground": "#e0f2ed",
+      "artInk": "#176b5b",
+      "tags": [
+        "notes",
+        "work"
+      ],
+      "body": [
+        "When a decision is fresh, write down the problem, the options you considered, and why you chose one.",
+        "A month later, that short note can save time. You can see whether the assumptions were correct and what you would change next time.",
+        "Keep the habit small enough to maintain. Three useful sentences are a good start."
+      ]
+    },
+    {
+      "slug": "a-calm-approach-to-learning",
+      "title": "A calmer approach to learning",
+      "excerpt": "Build a sustainable learning loop instead of trying to master everything at once.",
+      "category": "Career",
+      "date": "2026-09-28",
+      "readingTime": "3 min read",
+      "featured": true,
+      "research": false,
+      "artLabel": "ONE STEP",
+      "artBackground": "#f9e7d7",
+      "artInk": "#854d24",
+      "tags": [
+        "learning",
+        "career"
+      ],
+      "body": [
+        "Choose one skill that matters for your current work. Define a tiny outcome you can complete in one session.",
+        "After the session, write what worked, what confused you, and what you will try next. This turns passive consumption into active practice.",
+        "Review the notes weekly. Progress often becomes visible only after you look back."
+      ]
+    },
+    {
+      "slug": "practical-guide-to-web-performance",
+      "title": "A practical guide to web performance",
+      "excerpt": "A checklist for finding the bottlenecks that make a website feel slow.",
+      "category": "Engineering",
+      "date": "2026-09-18",
+      "readingTime": "8 min read",
+      "featured": true,
+      "research": true,
+      "artLabel": "WEB / SPEED",
+      "artBackground": "#e3eafa",
+      "artInk": "#244d9b",
+      "tags": [
+        "performance",
+        "javascript",
+        "web"
+      ],
+      "body": [
+        {
+          "heading": "Measure before changing things"
+        },
+        "Start with field data where available, then use browser performance tools to identify the largest sources of delay.",
+        {
+          "heading": "A useful first checklist"
+        },
+        {
+          "list": [
+            "Compress and correctly size images.",
+            "Avoid unnecessary JavaScript on the initial route.",
+            "Cache static assets with appropriate headers.",
+            "Measure Core Web Vitals and test on slower devices."
+          ]
+        },
+        "Optimisation is an iterative process. Change one thing, measure again, and keep the improvements that help real users."
+      ]
+    },
+    {
+      "slug": "how-to-write-useful-technical-notes",
+      "title": "How to write useful technical notes",
+      "excerpt": "Turn debugging sessions and hard-won lessons into documentation you will actually reuse.",
+      "category": "Engineering",
+      "date": "2026-09-12",
+      "readingTime": "6 min read",
+      "featured": false,
+      "research": true,
+      "artLabel": "FIELD GUIDE",
+      "artBackground": "#f4e6fa",
+      "artInk": "#6b3486",
+      "tags": [
+        "documentation",
+        "developer tools"
+      ],
+      "body": [
+        "A good technical note records the context, the symptom, the reason, and the fix—not just the final command.",
+        "Add a small example and a date if the information may become stale. Keep credentials and sensitive logs out of the note.",
+        "Review notes periodically and turn recurring lessons into reusable documentation."
+      ]
+    },
+    {
+      "slug": "designing-a-small-product",
+      "title": "Designing a small product around real work",
+      "excerpt": "Start with a narrow problem, a clear user, and the smallest workflow that saves them time.",
+      "category": "Product",
+      "date": "2026-09-02",
+      "readingTime": "5 min read",
+      "featured": false,
+      "research": false,
+      "artLabel": "MAKE USEFUL",
+      "artBackground": "#f4f0d6",
+      "artInk": "#706018",
+      "tags": [
+        "product",
+        "startups"
+      ],
+      "body": [
+        "A small product can be valuable when it solves a repeated problem clearly and reliably.",
+        "Talk to potential users about their current workflow. Look for repeated friction rather than beginning with a long feature list.",
+        "Build the smallest useful version, observe where people struggle, and improve from evidence."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Practical insights on software engineering, AI, product building and independent work.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="color-scheme" content="light">
+  <title>Fieldnotes — Ideas for builders</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Fieldnotes home">fieldnotes<span>•</span></a>
+    <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu <span aria-hidden="true">☰</span></button>
+    <nav id="main-nav" aria-label="Main navigation">
+      <a href="#featured">Featured</a><a href="#insights">Latest insights</a><a href="#research">Research</a><a href="#about">About</a>
+    </nav>
+    <a class="header-cta" href="#subscribe">Get the newsletter <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="main">
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">FIELDNOTES / IDEAS FOR BUILDERS</p>
+        <h1>Ideas that move<br><span>your work forward.</span></h1>
+        <p class="intro-text">Practical insights, engineering notes, and lessons from building software and products in a changing world.</p>
+      </div>
+      <form class="subscribe-form" id="subscribe" action="mailto:hello@example.com" method="post" enctype="text/plain">
+        <label for="email">Get new articles in your inbox</label>
+        <div class="email-row"><input id="email" name="email" type="email" placeholder="Your email address" autocomplete="email" required><button type="submit">Subscribe <span aria-hidden="true">→</span></button></div>
+        <p>Occasional notes. No spam. Unsubscribe any time.</p>
+      </form>
+    </section>
+
+    <section id="featured" class="section featured-section">
+      <div class="section-title"><div><p class="eyebrow">HAND-PICKED FOR YOU</p><h2>Featured articles</h2></div><a class="view-all" href="#insights">Explore all articles <span>↗</span></a></div>
+      <div id="featured-grid" class="featured-grid" aria-live="polite"><p>Loading articles…</p></div>
+    </section>
+
+    <section id="insights" class="section insights-section">
+      <div class="section-title"><div><p class="eyebrow">THE LATEST</p><h2>Latest insights</h2></div></div>
+      <div class="insight-tools">
+        <label class="search-box"><span class="sr-only">Search articles</span><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search insights…"></label>
+        <div id="filters" class="filters" aria-label="Filter articles by category"></div>
+      </div>
+      <div id="insights-grid" class="insights-grid" aria-live="polite"></div>
+      <p id="empty-state" class="empty-state" hidden>No articles match your search.</p>
+    </section>
+
+    <section id="research" class="section research-section">
+      <div class="research-heading"><div><p class="eyebrow">DEEPER READING</p><h2>Research & resources</h2><p>Longer reads, field guides, and practical resources worth saving.</p></div><span class="research-mark" aria-hidden="true">F/01</span></div>
+      <div id="research-grid" class="research-grid"></div>
+    </section>
+
+    <section id="about" class="about-strip">
+      <div><p class="eyebrow">WHY FIELDNOTES</p><h2>Useful ideas.<br>Clearly explained.</h2></div>
+      <p>This independent publication shares lessons about software engineering, AI, product thinking, and building a sustainable career. Replace this copy with your own author introduction.</p>
+    </section>
+
+    <aside class="ad-slot" aria-label="Advertisement"><span>ADVERTISEMENT</span><p>Advertisement placement</p><small>Add approved ad-network code here after reviewing its policies.</small></aside>
+  </main>
+
+  <footer class="footer">
+    <a class="brand" href="./">fieldnotes<span>•</span></a>
+    <div class="footer-links"><a href="#about">About</a><a href="#subscribe">Newsletter</a><a href="mailto:hello@example.com">Contact</a><a href="./privacy.html">Privacy</a></div>
+    <p>© <span id="year"></span> Fieldnotes. Independent writing for curious people.</p>
+  </footer>
+  <script src="./app.js" defer></script>
+</body>
+</html>
