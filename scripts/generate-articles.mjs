@@ -1,28 +1,55 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const SITE_DIR = path.resolve("site");
+// --------------------------------------------------
+// Configuration
+// --------------------------------------------------
+
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
+
+const SITE_DIR = path.join(ROOT_DIR, "site");
 const POSTS_FILE = path.join(SITE_DIR, "posts.json");
+const TEMPLATE_FILE = path.join(
+  SCRIPT_DIR,
+  "templates",
+  "article.html"
+);
 const ARTICLE_DIR = path.join(SITE_DIR, "article");
 
 const SITE_URL = "https://noon.blog";
-const DEFAULT_AUTHOR = "Noon.blog";
+const SITE_NAME = "noon.blog";
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-// Escape untrusted text before inserting it into HTML.
+const ALLOWED_CODE_LANGUAGES = new Set([
+  "text",
+  "tsx",
+  "ts",
+  "jsx",
+  "js",
+  "json",
+  "bash",
+  "html",
+  "css",
+]);
+
+// --------------------------------------------------
+// Security helpers
+// --------------------------------------------------
+
 function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
+  return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
-    "'": "&#39;"
+    "'": "&#39;",
   })[char]);
 }
 
-// Prevent strings from breaking out of a JSON-LD script element.
 function safeJson(value) {
   return JSON.stringify(value)
     .replace(/</g, "\\u003c")
@@ -34,234 +61,349 @@ function safeJson(value) {
 
 function requiredText(value, field, slug) {
   if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`Missing ${field} for article "${slug}"`);
+    throw new Error(
+      `Article "${slug}": "${field}" must be a non-empty string.`
+    );
   }
 
   return value.trim();
 }
 
-function formatDate(value, slug) {
-  if (typeof value !== "string" ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw new Error(`Invalid date for article "${slug}"`);
+function validateSlug(slug) {
+  if (
+    typeof slug !== "string" ||
+    !SLUG_PATTERN.test(slug)
+  ) {
+    throw new Error(
+      `Invalid article slug "${String(slug)}". ` +
+      "Use lowercase letters, numbers, and single hyphens."
+    );
   }
 
-  const date = new Date(`${value}T00:00:00Z`);
+  return slug;
+}
+
+function validateDate(value, slug) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
+    throw new Error(
+      `Article "${slug}": date must use YYYY-MM-DD format.`
+    );
+  }
+
+  const parsed = new Date(`${value}T00:00:00.000Z`);
 
   if (
-    Number.isNaN(date.getTime()) ||
-    date.toISOString().slice(0, 10) !== value
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
   ) {
-    throw new Error(`Invalid date for article "${slug}"`);
+    throw new Error(
+      `Article "${slug}": "${value}" is not a valid date.`
+    );
   }
 
   return value;
 }
 
-function renderBody(body) {
+// --------------------------------------------------
+// Article body renderer
+// Supported formats:
+// - "Paragraph text"
+// - { heading: "Section heading" }
+// - { list: ["Item one", "Item two"] }
+// - { language: "tsx", code: "..." }
+// --------------------------------------------------
+
+function renderBody(body, slug) {
   if (!Array.isArray(body)) {
-    throw new Error("Article body must be an array");
+    throw new Error(
+      `Article "${slug}": body must be an array.`
+    );
   }
 
-  return body.map(block => {
-    if (typeof block === "string") {
-      return `<p>${escapeHtml(block)}</p>`;
-    }
+  if (body.length === 0) {
+    throw new Error(
+      `Article "${slug}": body cannot be empty.`
+    );
+  }
 
-    if (!block || typeof block !== "object" ||
-        Array.isArray(block)) {
-      throw new Error("Invalid article body block");
-    }
-
-    if (typeof block.heading === "string") {
-      return `<h2>${escapeHtml(block.heading)}</h2>`;
-    }
-
-    if (Array.isArray(block.list)) {
-      const items = block.list.map(item => {
-        if (typeof item !== "string") {
-          throw new Error("Article list items must be strings");
+  return body
+    .map((block, index) => {
+      // Paragraph
+      if (typeof block === "string") {
+        if (!block.trim()) {
+          throw new Error(
+            `Article "${slug}": empty paragraph at index ${index}.`
+          );
         }
 
-        return `<li>${escapeHtml(item)}</li>`;
-      }).join("\n");
+        return `<p>${escapeHtml(block)}</p>`;
+      }
 
-      return `<ul>\n${items}\n</ul>`;
-    }
+      if (
+        !block ||
+        typeof block !== "object" ||
+        Array.isArray(block)
+      ) {
+        throw new Error(
+          `Article "${slug}": invalid body block at index ${index}.`
+        );
+      }
 
-    throw new Error("Unsupported article body block");
-  }).join("\n");
+      // Heading
+      if (typeof block.heading === "string") {
+        if (!block.heading.trim()) {
+          throw new Error(
+            `Article "${slug}": empty heading at index ${index}.`
+          );
+        }
+
+        return `<h2>${escapeHtml(block.heading)}</h2>`;
+      }
+
+      // Unordered list
+      if (Array.isArray(block.list)) {
+        if (block.list.length === 0) {
+          throw new Error(
+            `Article "${slug}": empty list at index ${index}.`
+          );
+        }
+
+        const items = block.list.map((item) => {
+          if (
+            typeof item !== "string" ||
+            !item.trim()
+          ) {
+            throw new Error(
+              `Article "${slug}": list items must be non-empty strings.`
+            );
+          }
+
+          return `<li>${escapeHtml(item)}</li>`;
+        });
+
+        return `<ul>\n${items.join("\n")}\n</ul>`;
+      }
+
+      // Code block
+      if (typeof block.code === "string") {
+        const language =
+          typeof block.language === "string"
+            ? block.language.toLowerCase()
+            : "text";
+
+        if (!ALLOWED_CODE_LANGUAGES.has(language)) {
+          throw new Error(
+            `Article "${slug}": unsupported code language ` +
+            `"${language}" at index ${index}.`
+          );
+        }
+
+        return [
+          '<pre class="code-block">',
+          `<code class="language-${language}">${escapeHtml(block.code)}</code>`,
+          "</pre>",
+        ].join("\n");
+      }
+
+      throw new Error(
+        `Article "${slug}": unsupported article body block ` +
+        `at index ${index}.`
+      );
+    })
+    .join("\n\n");
 }
 
-function renderArticle(post) {
-  const slug = post.slug;
-  const title = requiredText(post.title, "title", slug);
-  const description = requiredText(post.excerpt, "excerpt", slug);
-  const date = formatDate(post.date, slug);
-  const category =
-    typeof post.category === "string" && post.category.trim()
-      ? post.category.trim()
-      : "Insights";
+// --------------------------------------------------
+// Date formatting
+// --------------------------------------------------
 
-  const url = `${SITE_URL}/article/${slug}/`;
+function formatDate(date) {
+  return new Date(`${date}T00:00:00.000Z`)
+    .toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+}
+
+// --------------------------------------------------
+// Render one complete article page
+// --------------------------------------------------
+
+function renderArticle(post, template) {
+  const slug = validateSlug(post.slug);
+
+  const title = requiredText(post.title, "title", slug);
+  const description = requiredText(
+    post.excerpt,
+    "excerpt",
+    slug
+  );
+  const category = requiredText(
+    post.category,
+    "category",
+    slug
+  );
+  const date = validateDate(post.date, slug);
+
   const readingTime =
     typeof post.readingTime === "string" &&
-    /^\d+\s+min read$/.test(post.readingTime)
-      ? post.readingTime
-      : "4 min read";
+    post.readingTime.trim()
+      ? post.readingTime.trim()
+      : "5 min read";
 
-  const body = renderBody(post.body ?? []);
-  const publishedDate = `${date}T00:00:00Z`;
+  const canonicalUrl =
+    `${SITE_URL}/article/${slug}/`;
 
-  const schema = {
+  const articleBody = renderBody(post.body, slug);
+
+  const structuredData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: title,
     description,
-    datePublished: publishedDate,
-    dateModified: publishedDate,
+    datePublished: `${date}T00:00:00.000Z`,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": url
+      "@id": canonicalUrl,
     },
     author: {
       "@type": "Organization",
-      name: DEFAULT_AUTHOR,
-      url: SITE_URL
+      name: SITE_NAME,
+      url: `${SITE_URL}/`,
     },
     publisher: {
       "@type": "Organization",
-      name: DEFAULT_AUTHOR,
-      url: SITE_URL
-    }
+      name: SITE_NAME,
+      url: `${SITE_URL}/`,
+    },
   };
 
-  return `<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{DESCRIPTION}}">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="robots" content="index,follow">
-    <title>{{TITLE}}</title>
-    <link rel="canonical" href="{{CANONICAL_URL}}">
-    <meta property="og:type" content="article">
-    <meta property="og:title" content="{{TITLE}}">
-    <meta property="og:description" content="{{DESCRIPTION}}">
-    <meta property="og:url" content="{{CANONICAL_URL}}">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="stylesheet" href="./article.css">
-    <script type="application/ld+json">{{STRUCTURED_DATA}}</script>
-</head>
-<body>
-    <a class="skip-link" href="#main">Skip to content</a>
+  const replacements = {
+    TITLE: escapeHtml(title),
+    DESCRIPTION: escapeHtml(description),
+    CANONICAL_URL: escapeHtml(canonicalUrl),
+    CATEGORY: escapeHtml(category),
+    DATE: escapeHtml(date),
+    DATE_TEXT: escapeHtml(formatDate(date)),
+    READING_TIME: escapeHtml(readingTime),
+    STRUCTURED_DATA: safeJson(structuredData),
+    ARTICLE_BODY: articleBody,
+  };
 
-    <header class="topbar">
-        <a class="brand" href="/">noon.blog<span>•</span></a>
-        <button class="menu-toggle" id="menu-toggle"
-            aria-expanded="false" aria-controls="main-nav">Menu ☰</button>
-        <nav id="main-nav" aria-label="Main navigation">
-            <a href="/#featured">Featured</a>
-            <a href="/#insights">Latest insights</a>
-            <a href="/#research">Research</a>
-            <a href="/#about">About</a>
-        </nav>
-        <a class="header-cta" href="/#subscribe">Get the newsletter ↗</a>
-    </header>
+  // Replace placeholders in one pass so inserted article
+  // content is never processed as another template value.
+  const html = template.replace(
+    /\{\{([A-Z_]+)\}\}/g,
+    (match, key) => {
+      if (!Object.hasOwn(replacements, key)) {
+        throw new Error(
+          `Unknown template placeholder "${match}" in "${slug}".`
+        );
+      }
 
-    <main id="main" class="article-main">
-        <a class="back-link" href="/#insights">← All insights</a>
-        <article id="article" class="article-content">
-            <p class="eyebrow">{{CATEGORY}}</p>
-            <p class="meta">
-                <time datetime="{{DATE}}">{{DATE_TEXT}}</time>
-                · {{READING_TIME}}
-            </p>
-            <h1 class="article-title">{{TITLE}}</h1>
-            <p class="article-deck">{{DESCRIPTION}}</p>
-            <div class="article-body">
-                {{ARTICLE_BODY}}
-            </div>
-        </article>
+      return replacements[key];
+    }
+  );
 
-        <aside class="ad-slot" aria-label="Advertisement">
-            <span>ADVERTISEMENT</span>
-            <p>Advertisement placement</p>
-        </aside>
-    </main>
+  // Fail rather than publish an incomplete template.
+  const unresolved = html.match(/\{\{[A-Z_]+\}\}/);
 
-    <footer class="footer">
-        <a class="brand" href="/">noon.blog<span>•</span></a>
-        <div class="footer-links">
-            <a href="/#about">About</a>
-            <a href="/#subscribe">Newsletter</a>
-            <a href="mailto:hello@example.com">Contact</a>
-        </div>
-        <p>© <span id="year"></span> noon.blog.</p>
-    </footer>
-
-    <script>
-        document.querySelector("#year").textContent =
-            new Date().getFullYear();
-
-        const toggle = document.querySelector("#menu-toggle");
-        const nav = document.querySelector("#main-nav");
-
-        toggle.addEventListener("click", () => {
-            const open = nav.classList.toggle("open");
-            toggle.setAttribute("aria-expanded", String(open));
-        });
-    </script>
-</body>
-</html>`;
-}
-
-async function main() {
-  const raw = await fs.readFile(POSTS_FILE, "utf8");
-  const data = JSON.parse(raw);
-
-  if (!data || !Array.isArray(data.posts)) {
-    throw new Error("posts.json must contain a posts array");
+  if (unresolved) {
+    throw new Error(
+      `Unresolved template placeholder "${unresolved[0]}" ` +
+      `in article "${slug}".`
+    );
   }
 
-  const seen = new Set();
+  return html;
+}
+
+// --------------------------------------------------
+// Generate every article page
+// --------------------------------------------------
+
+async function main() {
+  console.log("Starting article generation...");
+
+  const [postsFileContent, template] = await Promise.all([
+    fs.readFile(POSTS_FILE, "utf8"),
+    fs.readFile(TEMPLATE_FILE, "utf8"),
+  ]);
+
+  let data;
+
+  try {
+    data = JSON.parse(postsFileContent);
+  } catch (error) {
+    throw new Error(
+      `Could not parse posts.json: ${error.message}`
+    );
+  }
+
+  if (!data || !Array.isArray(data.posts)) {
+    throw new Error(
+      'posts.json must contain a "posts" array.'
+    );
+  }
+
+  if (data.posts.length === 0) {
+    throw new Error("No articles found in posts.json.");
+  }
+
+  const seenSlugs = new Set();
 
   // Validate all slugs before writing any pages.
   for (const post of data.posts) {
-    if (!post || typeof post.slug !== "string" ||
-        !SLUG_PATTERN.test(post.slug)) {
-      throw new Error(`Invalid article slug: ${post?.slug}`);
+    if (!post || typeof post !== "object") {
+      throw new Error("Every post must be an object.");
     }
 
-    if (seen.has(post.slug)) {
-      throw new Error(`Duplicate article slug: ${post.slug}`);
+    const slug = validateSlug(post.slug);
+
+    if (seenSlugs.has(slug)) {
+      throw new Error(`Duplicate article slug "${slug}".`);
     }
 
-    seen.add(post.slug);
+    seenSlugs.add(slug);
   }
 
   await fs.mkdir(ARTICLE_DIR, { recursive: true });
 
-  for (const post of data.posts) {
-    // Validate and render before writing this article.
-    const html = renderArticle(post);
-    const outputDir = path.join(ARTICLE_DIR, post.slug);
-    const outputFile = path.join(outputDir, "index.html");
+  let generatedCount = 0;
 
-    await fs.mkdir(outputDir, { recursive: true });
+  for (const post of data.posts) {
+    const slug = post.slug;
+    const html = renderArticle(post, template);
+
+    const outputDirectory = path.join(ARTICLE_DIR, slug);
+    const outputFile = path.join(
+      outputDirectory,
+      "index.html"
+    );
+
+    await fs.mkdir(outputDirectory, { recursive: true });
+
     await fs.writeFile(outputFile, html, {
       encoding: "utf8",
-      flag: "w"
+      flag: "w",
     });
 
-    console.log(`Generated /article/${post.slug}/`);
+    console.log(`Generated: site/article/${slug}/index.html`);
+
+    generatedCount += 1;
   }
 
-  console.log(`Successfully generated ${data.posts.length} articles.`);
+  console.log(
+    `Article generation complete. Generated ${generatedCount} page(s).`
+  );
 }
 
-main().catch(error => {
+main().catch((error) => {
   console.error("Article generation failed:", error.message);
   process.exitCode = 1;
 });
