@@ -1,4 +1,4 @@
-```yaml
+
 name: Deploy static blog to GitHub Pages
 
 on:
@@ -6,7 +6,7 @@ on:
     branches: ["main"]
     paths:
       - "site/**"
-      - ".github/workflows/deploy.yml"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -19,12 +19,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
+      pages: write
+      id-token: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
 
       - name: Validate JSON content
         run: python -m json.tool site/posts.json > /dev/null
@@ -51,4 +57,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-```
