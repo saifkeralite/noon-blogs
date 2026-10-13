@@ -7,7 +7,7 @@ const slug = url.pathname.split("/").filter(Boolean).pop();
   const dateText = value => { const d = new Date(value); return Number.isNaN(d.getTime()) ? "Date to be announced" : new Intl.DateTimeFormat("en", {month:"long",day:"numeric",year:"numeric",timeZone:"UTC"}).format(d); };
   async function init() {
     try {
-      const response = await fetch("./posts.json", {cache:"no-cache",credentials:"omit"});
+      const response = await fetch("../posts.json", {cache:"no-cache",credentials:"omit"});
       if (!response.ok) throw new Error();
       const data = await response.json();
       const post = Array.isArray(data.posts) ? data.posts.find(p => p && p.slug === slug) : null;
