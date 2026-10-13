@@ -1,8 +1,8 @@
 (() => {
   "use strict";
   const root = document.querySelector("#article");
-  const params = new URLSearchParams(location.search);
-  const slug = params.get("post");
+  const url = new URL(window.location.href);
+const slug = url.pathname.split("/").filter(Boolean).pop();
   const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; };
   const dateText = value => { const d = new Date(value); return Number.isNaN(d.getTime()) ? "Date to be announced" : new Intl.DateTimeFormat("en", {month:"long",day:"numeric",year:"numeric",timeZone:"UTC"}).format(d); };
   async function init() {

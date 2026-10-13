@@ -36,7 +36,7 @@
       new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(d);
   };
   const slugValid = slug => typeof slug === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
-  function articleUrl(post) { return `./article.html?post=${encodeURIComponent(post.slug)}`; }
+  function articleUrl(post) { return `./article.html/${encodeURIComponent(post.slug)}`; }
   function linkFor(post) {
     const a = el("a", "read-link", "Read article");
     const arrow = el("span", "", "↗");
