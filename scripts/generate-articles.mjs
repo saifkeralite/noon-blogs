@@ -2,6 +2,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { marked } from "marked";
+import sanitizeHtml from "sanitize-html";
 
 // --------------------------------------------------
 // Configuration
@@ -12,9 +14,11 @@ const ROOT_DIR = path.resolve(SCRIPT_DIR, "..");
 
 const SITE_DIR = path.join(ROOT_DIR, "site");
 const POSTS_FILE = path.join(SITE_DIR, "posts.json");
+const CONTENT_DIR = path.join(ROOT_DIR, "content", "articles");
 const TEMPLATE_FILE = path.join(
-  SCRIPT_DIR,
-  "templates",
+  ROOT_DIR,
+  "article",
+  "template",
   "article.html"
 );
 const ARTICLE_DIR = path.join(SITE_DIR, "article");
@@ -25,15 +29,8 @@ const SITE_NAME = "noon.blog";
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const ALLOWED_CODE_LANGUAGES = new Set([
-  "text",
-  "tsx",
-  "ts",
-  "jsx",
-  "js",
-  "json",
-  "bash",
-  "html",
-  "css",
+  "text", "tsx", "ts", "jsx", "js", "json",
+  "bash", "html", "css",
 ]);
 
 // --------------------------------------------------
@@ -70,14 +67,8 @@ function requiredText(value, field, slug) {
 }
 
 function validateSlug(slug) {
-  if (
-    typeof slug !== "string" ||
-    !SLUG_PATTERN.test(slug)
-  ) {
-    throw new Error(
-      `Invalid article slug "${String(slug)}". ` +
-      "Use lowercase letters, numbers, and single hyphens."
-    );
+  if (typeof slug !== "string" || !SLUG_PATTERN.test(slug)) {
+    throw new Error(`Invalid article slug "${String(slug)}".`);
   }
 
   return slug;
@@ -108,112 +99,63 @@ function validateDate(value, slug) {
 }
 
 // --------------------------------------------------
-// Article body renderer
-// Supported formats:
-// - "Paragraph text"
-// - { heading: "Section heading" }
-// - { list: ["Item one", "Item two"] }
-// - { language: "tsx", code: "..." }
+// Markdown rendering
 // --------------------------------------------------
 
-function renderBody(body, slug) {
-  if (!Array.isArray(body)) {
-    throw new Error(
-      `Article "${slug}": body must be an array.`
-    );
+marked.setOptions({
+  gfm: true,
+  breaks: false,
+});
+
+function renderMarkdown(markdown, slug) {
+  if (!markdown.trim()) {
+    throw new Error(`Article "${slug}": Markdown content is empty.`);
   }
 
-  if (body.length === 0) {
-    throw new Error(
-      `Article "${slug}": body cannot be empty.`
-    );
-  }
+  const rawHtml = marked.parse(markdown, {
+    async: false,
+  });
 
-  return body
-    .map((block, index) => {
-      // Paragraph
-      if (typeof block === "string") {
-        if (!block.trim()) {
-          throw new Error(
-            `Article "${slug}": empty paragraph at index ${index}.`
-          );
-        }
+  return sanitizeHtml(rawHtml, {
+    allowedTags: [
+      ...sanitizeHtml.defaults.allowedTags,
+      "h1",
+      "img",
+    ],
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      a: ["href", "name", "target", "rel"],
+      code: ["class"],
+      img: ["src", "alt", "title", "width", "height"],
+    },
+    allowedSchemes: ["http", "https", "mailto"],
+    transformTags: {
+      a: sanitizeHtml.simpleTransform(
+        "a",
+        { rel: "noopener noreferrer" },
+        true
+      ),
+    },
+  });
+}
 
-        return `<p>${escapeHtml(block)}</p>`;
-      }
+function validateCodeLanguages(markdown, slug) {
+  const fencePattern = /^ {0,3}(`{3,}|~{3,})([^`~\r\n]*)$/gm;
+  let match;
 
-      if (
-        !block ||
-        typeof block !== "object" ||
-        Array.isArray(block)
-      ) {
-        throw new Error(
-          `Article "${slug}": invalid body block at index ${index}.`
-        );
-      }
+  while ((match = fencePattern.exec(markdown)) !== null) {
+    const info = match[2].trim();
 
-      // Heading
-      if (typeof block.heading === "string") {
-        if (!block.heading.trim()) {
-          throw new Error(
-            `Article "${slug}": empty heading at index ${index}.`
-          );
-        }
+    if (!info) continue;
 
-        return `<h2>${escapeHtml(block.heading)}</h2>`;
-      }
+    const language = info.split(/\s+/)[0].toLowerCase();
 
-      // Unordered list
-      if (Array.isArray(block.list)) {
-        if (block.list.length === 0) {
-          throw new Error(
-            `Article "${slug}": empty list at index ${index}.`
-          );
-        }
-
-        const items = block.list.map((item) => {
-          if (
-            typeof item !== "string" ||
-            !item.trim()
-          ) {
-            throw new Error(
-              `Article "${slug}": list items must be non-empty strings.`
-            );
-          }
-
-          return `<li>${escapeHtml(item)}</li>`;
-        });
-
-        return `<ul>\n${items.join("\n")}\n</ul>`;
-      }
-
-      // Code block
-      if (typeof block.code === "string") {
-        const language =
-          typeof block.language === "string"
-            ? block.language.toLowerCase()
-            : "text";
-
-        if (!ALLOWED_CODE_LANGUAGES.has(language)) {
-          throw new Error(
-            `Article "${slug}": unsupported code language ` +
-            `"${language}" at index ${index}.`
-          );
-        }
-
-        return [
-          '<pre class="code-block">',
-          `<code class="language-${language}">${escapeHtml(block.code)}</code>`,
-          "</pre>",
-        ].join("\n");
-      }
-
+    if (!ALLOWED_CODE_LANGUAGES.has(language)) {
       throw new Error(
-        `Article "${slug}": unsupported article body block ` +
-        `at index ${index}.`
+        `Article "${slug}": unsupported code language "${language}".`
       );
-    })
-    .join("\n\n");
+    }
+  }
 }
 
 // --------------------------------------------------
@@ -231,35 +173,42 @@ function formatDate(date) {
 }
 
 // --------------------------------------------------
-// Render one complete article page
+// Render one article
 // --------------------------------------------------
 
-function renderArticle(post, template) {
+async function renderArticle(post, template) {
   const slug = validateSlug(post.slug);
 
   const title = requiredText(post.title, "title", slug);
-  const description = requiredText(
-    post.excerpt,
-    "excerpt",
-    slug
-  );
-  const category = requiredText(
-    post.category,
-    "category",
-    slug
-  );
+  const description = requiredText(post.excerpt, "excerpt", slug);
+  const category = requiredText(post.category, "category", slug);
   const date = validateDate(post.date, slug);
 
   const readingTime =
-    typeof post.readingTime === "string" &&
-    post.readingTime.trim()
+    typeof post.readingTime === "string" && post.readingTime.trim()
       ? post.readingTime.trim()
       : "5 min read";
 
-  const canonicalUrl =
-    `${SITE_URL}/article/${slug}/`;
+  const markdownPath = path.join(CONTENT_DIR, `${slug}.md`);
+  let markdown;
 
-  const articleBody = renderBody(post.body, slug);
+  try {
+    markdown = await fs.readFile(markdownPath, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      throw new Error(
+        `Article "${slug}" is missing its Markdown file: ` +
+        `content/articles/${slug}.md`
+      );
+    }
+
+    throw error;
+  }
+
+  validateCodeLanguages(markdown, slug);
+
+  const articleBody = renderMarkdown(markdown, slug);
+  const canonicalUrl = `${SITE_URL}/article/${slug}/`;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -295,8 +244,6 @@ function renderArticle(post, template) {
     ARTICLE_BODY: articleBody,
   };
 
-  // Replace placeholders in one pass so inserted article
-  // content is never processed as another template value.
   const html = template.replace(
     /\{\{([A-Z_]+)\}\}/g,
     (match, key) => {
@@ -310,7 +257,6 @@ function renderArticle(post, template) {
     }
   );
 
-  // Fail rather than publish an incomplete template.
   const unresolved = html.match(/\{\{[A-Z_]+\}\}/);
 
   if (unresolved) {
@@ -324,7 +270,7 @@ function renderArticle(post, template) {
 }
 
 // --------------------------------------------------
-// Generate every article page
+// Generate article pages
 // --------------------------------------------------
 
 async function main() {
@@ -340,26 +286,17 @@ async function main() {
   try {
     data = JSON.parse(postsFileContent);
   } catch (error) {
-    throw new Error(
-      `Could not parse posts.json: ${error.message}`
-    );
+    throw new Error(`Could not parse posts.json: ${error.message}`);
   }
 
-  if (!data || !Array.isArray(data.posts)) {
-    throw new Error(
-      'posts.json must contain a "posts" array.'
-    );
-  }
-
-  if (data.posts.length === 0) {
-    throw new Error("No articles found in posts.json.");
+  if (!data || !Array.isArray(data.posts) || data.posts.length === 0) {
+    throw new Error('posts.json must contain a non-empty "posts" array.');
   }
 
   const seenSlugs = new Set();
 
-  // Validate all slugs before writing any pages.
   for (const post of data.posts) {
-    if (!post || typeof post !== "object") {
+    if (!post || typeof post !== "object" || Array.isArray(post)) {
       throw new Error("Every post must be an object.");
     }
 
@@ -372,34 +309,26 @@ async function main() {
     seenSlugs.add(slug);
   }
 
-  await fs.mkdir(ARTICLE_DIR, { recursive: true });
-
-  let generatedCount = 0;
+  // Render all pages before writing any of them.
+  const generatedPages = [];
 
   for (const post of data.posts) {
-    const slug = post.slug;
-    const html = renderArticle(post, template);
+    const html = await renderArticle(post, template);
+    generatedPages.push({ slug: post.slug, html });
+  }
 
+  for (const { slug, html } of generatedPages) {
     const outputDirectory = path.join(ARTICLE_DIR, slug);
-    const outputFile = path.join(
-      outputDirectory,
-      "index.html"
-    );
+    const outputFile = path.join(outputDirectory, "index.html");
 
     await fs.mkdir(outputDirectory, { recursive: true });
-
-    await fs.writeFile(outputFile, html, {
-      encoding: "utf8",
-      flag: "w",
-    });
+    await fs.writeFile(outputFile, html, "utf8");
 
     console.log(`Generated: site/article/${slug}/index.html`);
-
-    generatedCount += 1;
   }
 
   console.log(
-    `Article generation complete. Generated ${generatedCount} page(s).`
+    `Article generation complete. Generated ${generatedPages.length} page(s).`
   );
 }
 

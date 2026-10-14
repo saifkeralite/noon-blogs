@@ -1,5 +1,5 @@
 
-name: Deploy static blog to GitHub Pages
+name: Secure static blog deployment
 
 on:
   push:
@@ -7,22 +7,39 @@ on:
       - main
     paths:
       - "site/**"
+      - "content/articles/**"
+      - "article/template/**"
       - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/pages.yml"
+      - ".github/dependabot.yml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "site/**"
+      - "content/articles/**"
+      - "article/template/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pages.yml"
+      - ".github/dependabot.yml"
+
   workflow_dispatch:
 
-# Default: read-only repository access.
 permissions:
   contents: read
 
-# Avoid overlapping deployments.
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: noon-blog-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: Generate and validate website
+    name: Validate and build blog
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -48,47 +65,106 @@ jobs:
           test -f site/index.html
           test -f site/posts.json
           test -f scripts/generate-articles.mjs
+          test -f article/template/article.html
+          test -f package.json
+          test -f package-lock.json
+          test -d content/articles
 
-      - name: Validate JSON content
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m json.tool site/posts.json > /dev/null
-          echo "posts.json is valid."
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check JavaScript syntax
+        run: npm run check
+
+      - name: Check dependency vulnerabilities
+        run: npm audit --audit-level=high
+
+      - name: Validate posts JSON
+        run: python -m json.tool site/posts.json > /dev/null
 
       - name: Generate article pages
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/generate-articles.mjs
+        run: npm run build
 
-      - name: Validate generated article pages
+      - name: Validate generated pages
         shell: bash
         run: |
           set -euo pipefail
 
-          if ! find site/article -type f \
-            \( -name "index.html" -o -name "*.html" \) \
-            -print -quit | grep -q .; then
-            echo "ERROR: No generated article HTML files found."
-            exit 1
-          fi
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const { posts } = JSON.parse(
+            fs.readFileSync("site/posts.json", "utf8")
+          );
+
+          if (!Array.isArray(posts) || posts.length === 0) {
+            throw new Error("posts.json must contain a non-empty posts array");
+          }
+
+          const seen = new Set();
+
+          for (const post of posts) {
+            if (
+              !post ||
+              typeof post.slug !== "string" ||
+              !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(post.slug)
+            ) {
+              throw new Error("Invalid article metadata or slug");
+            }
+
+            if (seen.has(post.slug)) {
+              throw new Error(`Duplicate slug: ${post.slug}`);
+            }
+            seen.add(post.slug);
+
+            const markdownPath =
+              `content/articles/${post.slug}.md`;
+            const htmlPath =
+              `site/article/${post.slug}/index.html`;
+
+            if (!fs.existsSync(markdownPath)) {
+              throw new Error(`Missing Markdown: ${markdownPath}`);
+            }
+
+            if (!fs.existsSync(htmlPath)) {
+              throw new Error(`Missing generated HTML: ${htmlPath}`);
+            }
+
+            const html = fs.readFileSync(htmlPath, "utf8");
+            const canonical =
+              `https://noon.blog/article/${post.slug}/`;
+
+            if (!html.includes(canonical)) {
+              throw new Error(`Canonical URL missing: ${post.slug}`);
+            }
+
+            if (!html.includes('application/ld+json')) {
+              throw new Error(`Structured data missing: ${post.slug}`);
+            }
+
+            console.log(`Validated: ${post.slug}`);
+          }
+          NODE
 
           test -f site/robots.txt
           test -f site/sitemap.xml
 
-          echo "Generated site validation passed."
+          echo "All article checks passed."
 
+      # Only the main branch publishes a Pages artifact.
       - name: Upload GitHub Pages artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site/
           retention-days: 1
 
   deploy:
-    name: Deploy website
+    name: Approve and deploy production
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -96,6 +172,7 @@ jobs:
       pages: write
       id-token: write
 
+    # Required reviewer approval is configured in GitHub Settings.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

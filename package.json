@@ -1,0 +1,15 @@
+{
+  "name": "noon-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static engineering and technology blog",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/generate-articles.mjs",
+    "check": "node --check scripts/generate-articles.mjs"
+  },
+  "devDependencies": {
+    "marked": "^18.1.1",
+    "sanitize-html": "^2.18.0"
+  }
+}
