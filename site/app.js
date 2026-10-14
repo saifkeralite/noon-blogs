@@ -120,7 +120,7 @@
       renderInsights();
       researchGrid.replaceChildren(...posts.filter(p => p.research).slice(0, 3).map(researchCard));
       if (!researchGrid.children.length) {
-        researchGrid.append(el("p", "", "Mark a post with \"research\": true to feature it here."));
+        researchGrid.append(el("p", "", ""));
       }
     } catch {
       featuredGrid.replaceChildren(el("p", "", "Articles could not be loaded. Please try again later."));
