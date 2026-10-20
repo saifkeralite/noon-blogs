@@ -2,3 +2,10 @@ User-agent: *
 Allow: /
 
 Sitemap: https://noon.blog/sitemap.xml
+
+# Allow Google to crawl the favicon directory
+User-agent: Googlebot
+Allow: /fav/favicon.png
+
+User-agent: Googlebot-Image
+Allow: /fav/favicon.png
