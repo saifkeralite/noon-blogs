@@ -9,6 +9,13 @@
   </url>
    <!-- Blog Articles -->
   <url>
+    <loc>https://noon.blog/article/grok-bot-marketplace-are-you-guys-on-there-yet</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+   <url>
     <loc>https://noon.blog/article/how-to-review-ai-generated-react-code-before-merging</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>monthly</changefreq>
