@@ -47,6 +47,13 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function wrapImages(html) {
+  return html.replace(
+    /<img\b[^>]*>/gi,
+    '<div class="article-image-wrapper">$&</div>'
+  );
+}
+
 function safeJson(value) {
   return JSON.stringify(value)
     .replace(/</g, "\\u003c")
@@ -116,7 +123,7 @@ function renderMarkdown(markdown, slug) {
     async: false,
   });
 
-  return sanitizeHtml(rawHtml, {
+  const sanitizedHtml =  sanitizeHtml(rawHtml, {
     allowedTags: [
       ...sanitizeHtml.defaults.allowedTags,
       "h1",
@@ -137,6 +144,8 @@ function renderMarkdown(markdown, slug) {
       ),
     },
   });
+
+  return wrapImages(sanitizedHtml);
 }
 
 function validateCodeLanguages(markdown, slug) {

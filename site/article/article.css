@@ -65,9 +65,26 @@
 
 .code-block{width: 100%;overflow: auto;}
 
-.article-block{display: flex;}
+.article-block{display: flex;flex-wrap: wrap;}
+
+.article-image-wrapper {
+  width: 100%;
+  margin: 24px 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.article-image-wrapper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
 
 @media(max-width:700px) {
+    .article-content {
+        max-width: 100%;
+    }
     .article-main {
         padding-top: 32px
     }
@@ -75,4 +92,6 @@
     .article-body {
         font-size: 1rem
     }
+
+    .aside-ad-block{max-width: 100%;width: 100%;}
 }

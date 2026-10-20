@@ -1,6 +1,26 @@
 {
   "posts": [
     {
+      "slug": "grok-bot-marketplace-are-you-there",
+      "title": "Grok Bot Marketplace, Are you there?",
+      "excerpt": "A quick heads-up on what exactly this Grok Marketplace does",
+      "category": "AI",
+      "date": "2026-10-20",
+      "readingTime": "4 min read",
+      "featured": true,
+      "research": false,
+      "artLabel": "PLATFORM",
+      "artBackground": "#e8e2ff",
+      "artInk": "#43318f",
+      "tags": [
+        "x",
+        "ai",
+        "bot",
+        "grok",
+        "software-engineering"
+      ]
+    },
+    {
       "slug": "how-to-review-ai-generated-react-code-before-merging",
       "title": "How to Review AI-Generated React Code Before Merging",
       "excerpt": "AI can generate React code in seconds, but that doesn't mean it's ready to merge. Learn how to review AI-generated React code for correctness, security, performance, maintainability, and hidden bugs before it reaches production.",
