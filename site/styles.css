@@ -534,7 +534,8 @@ h1 span {
   justify-content: center;
   text-align: center;
   padding: 20px;
-  color: var(--muted)
+  color: var(--muted);
+  display: none;
 }
 
 .ad-slot>span {
