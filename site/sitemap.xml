@@ -13,6 +13,20 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <!-- Legal & Static Pages -->
+  <url>
+    <loc>https://noon.blog/privacy</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://noon.blog/terms</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
    <!-- Blog Articles -->
   <url>
     <loc>https://noon.blog/article/grok-bot-marketplace-are-you-guys-on-there-yet/</loc>
