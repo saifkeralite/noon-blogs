@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="About noon.blog — practical insights, AI/ML architectures, software engineering notes, and emerging tech trends by Saif.">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="robots" content="index,follow">
+    <title>About Us — noon.blog</title>
+    <link rel="canonical" href="https://noon.blog/about/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="About Us — noon.blog">
+    <meta property="og:description"
+        content="Independent writing on software engineering, AI/ML architectures, and technical building.">
+    <meta property="og:url" content="https://noon.blog/about">
+    <meta property="og:site_name" content="noon.blog">
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="article/article.css">
+
+    <!-- Main Favicon for most browsers (PNG format) -->
+    <link rel="icon" type="image/png" sizes="16x16" href="../../fav/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../fav/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="../../fav/favicon-48x48.png">
+
+    <!-- Optional but recommended: For older versions of Internet Explorer -->
+    <link rel="shortcut icon" href="../../fav/favicon.ico">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AboutPage",
+      "name": "About Us",
+      "url": "https://noon.blog/about",
+      "description": "About page for noon.blog featuring technical notes, AI/ML architecture reviews, and software engineering insights written by Saif.",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://noon.blog/about"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Saif"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "noon.blog",
+        "url": "https://noon.blog/"
+      }
+    }
+    </script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="topbar">
+        <a class="brand" href="/">noon.blog<span>•</span></a>
+        <button class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu ☰</button>
+        <nav id="main-nav" aria-label="Main navigation">
+            <a href="/#featured">Featured</a>
+            <!-- <a href="/#insights">Latest insights</a>
+            <a href="/#research">Research</a> -->
+            <a href="/about">About</a>
+        </nav>
+        <!-- <a class="header-cta" href="/#subscribe">Get the newsletter ↗</a> -->
+    </header>
+
+    <main id="main" class="article-main">
+        <a class="back-link" href="/#insights">← All insights</a>
+        <div class="article-block">
+            <article id="article" class="article-content">
+                <p class="eyebrow">ABOUT</p>
+                <p class="meta">
+                    Published on noon.blog
+                </p>
+                <h1 class="article-title">About noon.blog</h1>
+                <p class="article-deck">Practical insights, tech notes, and lessons from building software and AI
+                    systems in a changing world.</p>
+
+                <div class="user-io">
+                    <div class="user-profile-icon"><img src="images/user/anabel.JPG" alt="Saif"></div>
+                    <div class="user-profile-title-wrap">
+                        <div class="user-profile-title">Saif</div>
+                        <div>
+                            <p class="meta">
+                                Tech & Software Engineering
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="article-body">
+                    <p>Welcome to <strong>noon.blog</strong> — my independent publication dedicated to practical tech
+                        insights, engineering notes, artificial intelligence, and lessons learned from building
+                        software.</p>
+
+                    <p>Technology evolves at a rapid pace, but foundational engineering principles, solid system
+                        architecture, and clear code execution stand the test of time. I use this blog as a space to
+                        share actionable knowledge without fluff or unnecessary noise.</p>
+
+                    <p><strong>What I Cover</strong></p>
+                    <p>My writing focuses on key topics that help software engineers, developers, and product builders
+                        move their work forward:</p>
+                    <ul>
+                        <li><strong>AI & Machine Learning:</strong> Real-world implementations, LLM agent systems, model
+                            architectures, and practical developer tools.</li>
+                        <li><strong>Software Engineering & Architecture:</strong> Deep dives into modern frontend
+                            ecosystems, backend design patterns, code quality, and performance optimization.</li>
+                        <li><strong>Tech Trends & Tooling:</strong> Analysis of modern workflows, developer automation,
+                            and emerging technical paradigms.</li>
+                    </ul>
+
+                    <p><strong>My Mission</strong></p>
+                    <p>Useful ideas. Clearly explained. Whether you are reviewing code, exploring new framework
+                        patterns, or tracking the latest shifts in technology, I aim to bring clear, practical
+                        perspectives to technical builders.</p>
+
+                    <p><strong>Get in Touch</strong></p>
+                    <p>Have suggestions, feedback, or topics you would like to explore together? Feel free to send an
+                        email directly to <a href="mailto:contactme@noon.blog">contact@noon.blog</a>.</p>
+                </div>
+            </article>
+
+
+
+        </div>
+
+
+    </main>
+
+    <footer class="footer">
+        <a class="brand" href="/">noon.blog<span>•</span></a>
+        <div class="footer-links">
+            <a href="/about">About</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+        </div>
+        <p>© <span id="year"></span> noon.blog.</p>
+    </footer>
+
+    <script>
+        document.querySelector("#year").textContent =
+            new Date().getFullYear();
+
+        const toggle = document.querySelector("#menu-toggle");
+        const nav = document.querySelector("#main-nav");
+
+        toggle.addEventListener("click", () => {
+            const open = nav.classList.toggle("open");
+            toggle.setAttribute("aria-expanded", String(open));
+        });
+    </script>
+</body>
+
+</html>
